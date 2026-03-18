@@ -177,7 +177,7 @@ export default function App() {
   };
 
   const verifyPin = () => {
-    if (pinInput === "TripangUjang") {
+    if (pinInput === import.meta.env.VITE_DASHBOARD_PIN) {
       setView('dashboard');
       setShowPinModal(false);
     } else {
