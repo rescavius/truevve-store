@@ -38,6 +38,7 @@ export default function App() {
   const [cart, setCart] = useState({});
   const [activeCategory, setActiveCategory] = useState('Semua');
   const [showQrisModal, setShowQrisModal] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('qris'); // 'qris' | 'dana'
   const [showPinModal, setShowPinModal] = useState(false);
   const [pinInput, setPinInput] = useState('');
   const [pinError, setPinError] = useState('');
@@ -191,12 +192,16 @@ export default function App() {
       return;
     }
     if (cartItems.length === 0) return;
+    setPaymentMethod('qris');
     setShowQrisModal(true);
   };
 
   const handleSendWhatsApp = () => {
     const itemsListString = cartItems.map(item => `${item.name} (x${item.qty})`).join(', ');
     const totalString = formatIDR(cartTotal);
+    const paymentLine = paymentMethod === 'dana'
+      ? 'Berikut bukti bayar via DANA nya kak!'
+      : 'Berikut bukti bayar via QRIS nya kak!';
 
     const message = `TRUEVVE FISH IT ORDER FORM
 Halo kak, aku mau order ya!
@@ -204,10 +209,9 @@ username: ${username}
 item: ${itemsListString}
 total: ${totalString}
 
-Berikut bukti bayar via qrisnya kak!`;
+${paymentLine}`;
 
     const encodedMessage = encodeURIComponent(message);
-    // --- CHANGE 2: Updated WhatsApp number ---
     const waLink = `https://wa.me/6285185793108?text=${encodedMessage}`;
     window.open(waLink, '_blank');
     setShowQrisModal(false);
@@ -410,21 +414,86 @@ Berikut bukti bayar via qrisnya kak!`;
         )}
       </main>
 
-      {/* QRIS MODAL */}
+      {/* PAYMENT MODAL */}
       {showQrisModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
-            <div className="p-6 text-center">
-              <h3 className="text-2xl font-bold text-slate-800 mb-2">Scan QRIS</h3>
-              <p className="text-slate-600 mb-6">Silakan scan kode QR di bawah ini untuk membayar total <span className="font-bold text-slate-800">{formatIDR(cartTotal)}</span></p>
-              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 inline-block mb-6 shadow-sm">
-                <img
-                  src={qrisUrl}
-                  alt="QRIS Payment"
-                  className="w-64 h-64 object-contain mx-auto"
-                  onError={(e) => { e.target.src = 'https://via.placeholder.com/250?text=QRIS+BELUM+DIATUR'; }}
-                />
+            <div className="p-6">
+              <h3 className="text-2xl font-bold text-slate-800 mb-1 text-center">Pilih Metode Bayar</h3>
+              <p className="text-slate-500 text-sm text-center mb-6">Total: <span className="font-bold text-slate-800">{formatIDR(cartTotal)}</span></p>
+
+              {/* Payment Method Selector */}
+              <div className="grid grid-cols-2 gap-3 mb-6">
+                <button
+                  onClick={() => setPaymentMethod('qris')}
+                  className={`p-4 rounded-2xl border-2 text-center transition-all ${paymentMethod === 'qris' ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-slate-300'}`}
+                >
+                  <div className="flex justify-center mb-1">
+                    <img
+                      src="https://upload.wikimedia.org/wikipedia/commons/a/a2/Logo_QRIS.svg"
+                      alt="QRIS"
+                      className="h-7 object-contain"
+                      onError={(e) => { e.target.style.display='none'; }}
+                    />
+                  </div>
+                  <p className={`font-bold text-sm ${paymentMethod === 'qris' ? 'text-blue-700' : 'text-slate-700'}`}>QRIS</p>
+                  <p className="text-xs text-slate-400 mt-0.5">Scan QR Code</p>
+                </button>
+                <button
+                  onClick={() => setPaymentMethod('dana')}
+                  className={`p-4 rounded-2xl border-2 text-center transition-all ${paymentMethod === 'dana' ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-slate-300'}`}
+                >
+                  <div className="flex justify-center mb-1">
+                    <img
+                      src="https://upload.wikimedia.org/wikipedia/commons/7/72/Logo_dana_blue.svg"
+                      alt="DANA"
+                      className="h-7 object-contain"
+                      onError={(e) => { e.target.style.display='none'; }}
+                    />
+                  </div>
+                  <p className={`font-bold text-sm ${paymentMethod === 'dana' ? 'text-blue-700' : 'text-slate-700'}`}>DANA</p>
+                  <p className="text-xs text-slate-400 mt-0.5">Transfer DANA</p>
+                </button>
               </div>
+
+              {/* QRIS Payment Details */}
+              {paymentMethod === 'qris' && (
+                <div className="text-center">
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 inline-block mb-4 shadow-sm">
+                    <img
+                      src={qrisUrl}
+                      alt="QRIS Payment"
+                      className="w-56 h-56 object-contain mx-auto"
+                      onError={(e) => { e.target.src = 'https://via.placeholder.com/250?text=QRIS+BELUM+DIATUR'; }}
+                    />
+                  </div>
+                  <p className="text-sm text-slate-500 mb-4">Scan kode QR di atas lalu kirim bukti bayarnya ke WhatsApp</p>
+                </div>
+              )}
+
+              {/* DANA Payment Details */}
+              {paymentMethod === 'dana' && (
+                <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5 mb-4 text-center">
+                  <div className="flex justify-center mb-3">
+                    <img
+                      src="https://upload.wikimedia.org/wikipedia/commons/7/72/Logo_dana_blue.svg"
+                      alt="DANA"
+                      className="h-10 object-contain"
+                      onError={(e) => { e.target.style.display='none'; }}
+                    />
+                  </div>
+                  <p className="text-sm text-slate-500 mb-3">Transfer DANA ke nomor berikut:</p>
+                  <p className="text-2xl font-bold text-slate-800 tracking-wide">0812-7532-7581</p>
+                  <p className="text-sm text-slate-600 mt-1">Atas nama: <span className="font-semibold">Cindy</span></p>
+                  <div className="mt-3 pt-3 border-t border-blue-200">
+                    <p className="text-sm text-slate-500">Nominal transfer:</p>
+                    <p className="text-lg font-bold text-blue-600">{formatIDR(cartTotal)}</p>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-3">Setelah transfer, kirim bukti bayarnya ke WhatsApp</p>
+                </div>
+              )}
+
+              {/* Action Buttons */}
               <div className="space-y-3">
                 <button
                   onClick={handleSendWhatsApp}
